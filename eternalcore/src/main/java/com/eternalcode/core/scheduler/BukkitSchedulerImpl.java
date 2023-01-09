@@ -2,10 +2,9 @@ package com.eternalcode.core.scheduler;
 
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import panda.std.reactive.Completable;
+import panda.std.function.ThrowingSupplier;
 
 import java.time.Duration;
-import java.util.function.Supplier;
 
 public class BukkitSchedulerImpl implements Scheduler {
 
@@ -18,51 +17,51 @@ public class BukkitSchedulerImpl implements Scheduler {
     }
 
     @Override
-    public Task sync(Runnable task) {
-        return new BukkitTaskImpl(this.rootScheduler.runTask(this.plugin, task));
+    public Completable<Void> sync(Runnable task) {
+        return this.of(task, runnable -> this.rootScheduler.runTask(this.plugin, runnable));
     }
 
     @Override
-    public Task async(Runnable task) {
-        return new BukkitTaskImpl(this.rootScheduler.runTaskAsynchronously(this.plugin, task));
+    public Completable<Void> async(Runnable task) {
+        return this.of(task, runnable -> this.rootScheduler.runTaskAsynchronously(this.plugin, runnable));
     }
 
     @Override
-    public Task laterSync(Runnable task, Duration delay) {
-        return new BukkitTaskImpl(this.rootScheduler.runTaskLater(this.plugin, task, toTick(delay)));
+    public Completable<Void> laterSync(Runnable task, Duration delay) {
+        return this.of(task, runnable -> this.rootScheduler.runTaskLater(this.plugin, runnable, this.toTick(delay)));
     }
 
     @Override
-    public Task laterAsync(Runnable task, Duration delay) {
-        return new BukkitTaskImpl(this.rootScheduler.runTaskLaterAsynchronously(this.plugin, task, toTick(delay)));
+    public Completable<Void> laterAsync(Runnable task, Duration delay) {
+        return this.of(task, runnable -> this.rootScheduler.runTaskLaterAsynchronously(this.plugin, runnable, this.toTick(delay)));
     }
 
     @Override
-    public Task timerSync(Runnable task, Duration delay, Duration period) {
-        return new BukkitTaskImpl(this.rootScheduler.runTaskTimer(this.plugin, task, toTick(delay), toTick(period)));
+    public Completable<Void> timerSync(Runnable task, Duration delay, Duration period) {
+        return this.of(task, runnable -> this.rootScheduler.runTaskTimer(this.plugin, runnable, this.toTick(delay), this.toTick(period)));
     }
 
     @Override
-    public Task timerAsync(Runnable task, Duration delay, Duration period) {
-        return new BukkitTaskImpl(this.rootScheduler.runTaskTimerAsynchronously(this.plugin, task, toTick(delay), toTick(period)));
+    public Completable<Void> timerAsync(Runnable task, Duration delay, Duration period) {
+        return this.of(task, runnable -> this.rootScheduler.runTaskTimerAsynchronously(this.plugin, runnable, this.toTick(delay), this.toTick(period)));
     }
 
     @Override
-    public <T> Completable<T> completeSync(Supplier<T> task) {
-        Completable<T> completable = new Completable<>();
-        this.rootScheduler.runTask(this.plugin, () -> completable.complete(task.get()));
-        return completable;
+    public <T> Completable<T> completeSync(ThrowingSupplier<T, Exception> task) {
+        return CompletableImpl.createSync(this, task);
     }
 
     @Override
-    public <T> Completable<T> completeAsync(Supplier<T> task) {
-        Completable<T> completable = new Completable<>();
-        this.rootScheduler.runTaskAsynchronously(this.plugin, () -> completable.complete(task.get()));
-        return completable;
+    public <T> Completable<T> completeAsync(ThrowingSupplier<T, Exception> task) {
+        return CompletableImpl.createAsync(this, task);
     }
 
     private long toTick(Duration duration) {
         return duration.toMillis() / 50L;
+    }
+
+    private Completable<Void> of(Runnable task, CompletableImpl.SchedulerFunction scheduler) {
+        return CompletableImpl.create(this, scheduler, task);
     }
 
 }

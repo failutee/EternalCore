@@ -2,6 +2,7 @@ package com.eternalcode.core.database.wrapper;
 
 import com.eternalcode.core.chat.feature.ignore.IgnoreRepository;
 import com.eternalcode.core.database.DatabaseManager;
+import com.eternalcode.core.scheduler.Completable;
 import com.eternalcode.core.scheduler.Scheduler;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -12,7 +13,6 @@ import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.DatabaseTable;
 import com.j256.ormlite.table.TableUtils;
 import org.jetbrains.annotations.NotNull;
-import panda.std.reactive.Completable;
 
 import java.sql.SQLException;
 import java.time.Duration;

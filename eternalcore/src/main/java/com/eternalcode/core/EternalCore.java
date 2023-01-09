@@ -268,7 +268,7 @@ public class EternalCore extends JavaPlugin {
             exception.printStackTrace();
             this.getLogger().severe("Can not connect to database! Some functions may not work!");
 
-            NoneRepository noneRepository = new NoneRepository();
+            NoneRepository noneRepository = new NoneRepository(this.scheduler);
 
             homeRepository = noneRepository;
             ignoreRepository = noneRepository;

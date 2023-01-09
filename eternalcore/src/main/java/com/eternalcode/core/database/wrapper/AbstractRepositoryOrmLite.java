@@ -1,10 +1,10 @@
 package com.eternalcode.core.database.wrapper;
 
 import com.eternalcode.core.database.DatabaseManager;
+import com.eternalcode.core.scheduler.Completable;
 import com.eternalcode.core.scheduler.Scheduler;
 import com.j256.ormlite.dao.Dao;
 import panda.std.function.ThrowingFunction;
-import panda.std.reactive.Completable;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -44,20 +44,11 @@ abstract class AbstractRepositoryOrmLite {
     }
 
     <T, ID, R> Completable<R> action(Class<T> type, ThrowingFunction<Dao<T, ID>, R, SQLException> action) {
-        Completable<R> completableFuture = new Completable<>();
-
-        this.scheduler.async(() -> {
+        return this.scheduler.completeAsync(() -> {
             Dao<T, ID> dao = this.databaseManager.getDao(type);
 
-            try {
-                completableFuture.complete(action.apply(dao));
-            }
-            catch (SQLException sqlException) {
-                sqlException.printStackTrace();
-            }
-        });
-
-        return completableFuture;
+            return action.apply(dao);
+        }).thenError(Throwable::printStackTrace);
     }
 
 }

@@ -4,7 +4,6 @@ import dev.rollczi.litecommands.argument.Arg;
 import dev.rollczi.litecommands.argument.ArgumentContext;
 import dev.rollczi.litecommands.argument.ArgumentName;
 import dev.rollczi.litecommands.argument.SingleOrElseArgument;
-import dev.rollczi.litecommands.argument.simple.OneArgument;
 import dev.rollczi.litecommands.command.LiteInvocation;
 import dev.rollczi.litecommands.command.MatchResult;
 import dev.rollczi.litecommands.suggestion.Suggestion;
@@ -12,8 +11,6 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import panda.std.Option;
-import panda.std.Result;
 
 import java.lang.reflect.Parameter;
 import java.util.List;
@@ -29,7 +26,7 @@ public class WorldArgument implements SingleOrElseArgument<CommandSender, Arg> {
 
     @Override
     public MatchResult match(LiteInvocation invocation, ArgumentContext<Arg> context, String argument) {
-        World world = server.getWorld(argument);
+        World world = this.server.getWorld(argument);
 
         if (world == null) {
             return MatchResult.notMatched("&cNie ma takiego świata!"); //TODO: language

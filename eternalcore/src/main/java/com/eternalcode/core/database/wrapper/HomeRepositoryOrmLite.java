@@ -4,6 +4,7 @@ import com.eternalcode.core.database.DatabaseManager;
 import com.eternalcode.core.database.persister.LocationPersister;
 import com.eternalcode.core.home.Home;
 import com.eternalcode.core.home.HomeRepository;
+import com.eternalcode.core.scheduler.Completable;
 import com.eternalcode.core.scheduler.Scheduler;
 import com.eternalcode.core.user.User;
 import com.j256.ormlite.field.DatabaseField;
@@ -14,7 +15,6 @@ import org.bukkit.Location;
 import panda.std.Blank;
 import panda.std.Option;
 import panda.std.Result;
-import panda.std.reactive.Completable;
 
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -31,8 +31,8 @@ public class HomeRepositoryOrmLite extends AbstractRepositoryOrmLite implements 
     @Override
     public Completable<Option<Home>> getHome(UUID uuid) {
         return this.select(HomeWrapper.class, uuid)
-            .thenApply(Option::of)
-            .thenApply(home -> home.map(HomeWrapper::toHome));
+            .apply(Option::of)
+            .apply(home -> home.map(HomeWrapper::toHome));
     }
 
     @Override
@@ -48,7 +48,7 @@ public class HomeRepositoryOrmLite extends AbstractRepositoryOrmLite implements 
 
     @Override
     public Completable<Blank> saveHome(Home home) {
-        return this.save(HomeWrapper.class, HomeWrapper.from(home)).thenApply(ignore -> Blank.BLANK);
+        return this.save(HomeWrapper.class, HomeWrapper.from(home)).apply(ignore -> Blank.BLANK);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class HomeRepositoryOrmLite extends AbstractRepositoryOrmLite implements 
     @Override
     public Completable<Set<Home>> getHomes() {
         return this.selectAll(HomeWrapper.class)
-            .thenApply(homeOrmLites -> homeOrmLites.stream().map(HomeWrapper::toHome).collect(Collectors.toSet()));
+            .apply(homeOrmLites -> homeOrmLites.stream().map(HomeWrapper::toHome).collect(Collectors.toSet()));
     }
 
     @Override
@@ -83,7 +83,7 @@ public class HomeRepositoryOrmLite extends AbstractRepositoryOrmLite implements 
             .and()
             .eq("name", user.getName())
             .query()
-        )).thenApply(option -> option.map(homes -> homes.stream()
+        )).apply(option -> option.map(homes -> homes.stream()
                 .map(HomeWrapper::toHome)
                 .collect(Collectors.toSet())
             ).orElseGet(new HashSet<>()));
@@ -125,7 +125,7 @@ public class HomeRepositoryOrmLite extends AbstractRepositoryOrmLite implements 
         }
 
         Home toHome() {
-            return new Home(uuid, owner, name, location);
+            return new Home(this.uuid, this.owner, this.name, this.location);
         }
 
         static HomeWrapper from(Home home) {

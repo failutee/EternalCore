@@ -1,9 +1,9 @@
 package com.eternalcode.core.home;
 
+import com.eternalcode.core.scheduler.Completable;
 import com.eternalcode.core.user.User;
 import panda.std.Blank;
 import panda.std.Option;
-import panda.std.reactive.Completable;
 
 import java.util.Set;
 import java.util.UUID;

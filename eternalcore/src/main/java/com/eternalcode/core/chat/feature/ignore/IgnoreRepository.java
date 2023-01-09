@@ -1,6 +1,6 @@
 package com.eternalcode.core.chat.feature.ignore;
 
-import panda.std.reactive.Completable;
+import com.eternalcode.core.scheduler.Completable;
 
 import java.util.UUID;
 

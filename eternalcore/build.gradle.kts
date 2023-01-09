@@ -45,10 +45,11 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.2")
 
     // unit test
-    testImplementation("org.spigotmc:spigot-api:1.19.3-R0.1-SNAPSHOT")
-    testImplementation("org.codehaus.groovy:groovy-all:3.0.14")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
+    testImplementation("org.codehaus.groovy:groovy-all:3.0.14")
+    testImplementation("org.awaitility:awaitility:4.2.0")
+    testImplementation("org.spigotmc:spigot-api:1.19.3-R0.1-SNAPSHOT")
     testImplementation("com.github.seeseemelk:MockBukkit-v1.19:2.144.0")
     testImplementation("net.kyori:adventure-platform-bukkit:4.1.2")
     testImplementation("net.kyori:adventure-text-minimessage:4.12.0")
