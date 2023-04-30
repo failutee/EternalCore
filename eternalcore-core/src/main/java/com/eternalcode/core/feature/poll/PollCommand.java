@@ -1,5 +1,7 @@
 package com.eternalcode.core.feature.poll;
 
+import com.eternalcode.annotations.scan.command.DescriptionDocs;
+import com.eternalcode.annotations.scan.feature.FeatureDocs;
 import com.eternalcode.core.notification.NoticeService;
 import dev.rollczi.litecommands.argument.Arg;
 import dev.rollczi.litecommands.command.execute.Execute;
@@ -12,6 +14,10 @@ import java.time.Duration;
 
 @Route(name = "poll")
 @Permission("eternalcore.poll")
+@FeatureDocs(
+    name = "PollSystem",
+    description = "It manages and allows you to create any poll you want"
+)
 class PollCommand {
 
     private final PollManager pollManager;
@@ -25,6 +31,7 @@ class PollCommand {
     }
 
     @Execute(required = 0)
+    @DescriptionDocs(description = "Vote for the current poll")
     void openVoteInventory(Player player) {
         this.pollVoteInventory.openVoteInventory(player);
     }
@@ -32,6 +39,7 @@ class PollCommand {
     @Execute(required = 1)
     @Permission("eternalcore.poll.create")
     @Route(name = "create")
+    @DescriptionDocs(description = "Create new poll", arguments = "<poll name> <duration>")
     void executeCreate(Player player, @Arg @Suggest("pool_name") String name, @Arg Duration duration) {
         this.pollManager.startCreatingPool(player.getUniqueId(), name, duration);
     }
@@ -39,12 +47,14 @@ class PollCommand {
     @Execute(required = 0)
     @Permission("eternalcore.poll.create")
     @Route(name = "cancel")
+    @DescriptionDocs(description = "Cancel creating new poll")
     void executeCancel(Player player) {
         this.pollManager.cancelCreatingPool(player.getUniqueId());
     }
 
     @Execute(required = 1)
     @Route(name = "check")
+    @DescriptionDocs(description = "Check poll results")
     void executeCheck(Player player, @Arg String name) {
         this.pollResultsInventory.openResultsInventory(player, name);
     }
