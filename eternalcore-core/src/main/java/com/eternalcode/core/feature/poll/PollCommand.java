@@ -12,7 +12,7 @@ import java.time.Duration;
 
 @Route(name = "poll")
 @Permission("eternalcore.poll")
-public class PollCommand {
+class PollCommand {
 
     private final PollManager pollManager;
     private final PollVoteInventory pollVoteInventory;

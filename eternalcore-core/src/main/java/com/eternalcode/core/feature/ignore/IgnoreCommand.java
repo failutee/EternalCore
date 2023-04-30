@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Route(name = "ignore")
 @Permission("eternalcore.ignore")
-public class IgnoreCommand {
+class IgnoreCommand {
 
     private final IgnoreRepository repository;
     private final NoticeService noticeService;

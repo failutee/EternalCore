@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public class PollCreateController implements Listener {
+class PollCreateController implements Listener {
 
     private static final int MIN_OPTIONS_SIZE = 2;
     private static final int MAX_OPTIONS_SIZE = 5;

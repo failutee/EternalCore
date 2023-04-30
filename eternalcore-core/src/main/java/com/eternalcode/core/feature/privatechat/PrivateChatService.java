@@ -1,6 +1,6 @@
 package com.eternalcode.core.feature.privatechat;
 
-import com.eternalcode.core.feature.ignore.IgnoreRepository;
+import com.eternalcode.core.feature.ignore.IgnoreFacade;
 import com.eternalcode.core.notification.NoticeService;
 import com.eternalcode.core.user.User;
 import com.eternalcode.core.user.UserManager;
@@ -16,7 +16,7 @@ import java.util.UUID;
 public class PrivateChatService {
 
     private final NoticeService noticeService;
-    private final IgnoreRepository ignoreRepository;
+    private final IgnoreFacade ignoreFacade;
     private final UserManager userManager;
     private final PrivateChatPresenter presenter;
 
@@ -26,9 +26,9 @@ public class PrivateChatService {
 
     private final Set<UUID> socialSpy = new HashSet<>();
 
-    public PrivateChatService(NoticeService noticeService, IgnoreRepository ignoreRepository, UserManager userManager) {
+    public PrivateChatService(NoticeService noticeService, IgnoreFacade ignoreFacade, UserManager userManager) {
         this.noticeService = noticeService;
-        this.ignoreRepository = ignoreRepository;
+        this.ignoreFacade = ignoreFacade;
         this.userManager = userManager;
         this.presenter = new PrivateChatPresenter(noticeService);
     }
@@ -40,7 +40,7 @@ public class PrivateChatService {
             return;
         }
 
-        this.ignoreRepository.isIgnored(target.getUniqueId(), sender.getUniqueId()).then(isIgnored -> {
+        this.ignoreFacade.isIgnored(target.getUniqueId(), sender.getUniqueId()).then(isIgnored -> {
             if (!isIgnored) {
                 this.replies.put(target.getUniqueId(), sender.getUniqueId());
                 this.replies.put(sender.getUniqueId(), target.getUniqueId());

@@ -33,7 +33,8 @@ import com.eternalcode.core.configuration.implementation.PluginConfiguration;
 import com.eternalcode.core.database.DatabaseManager;
 import com.eternalcode.core.database.NoneRepository;
 import com.eternalcode.core.database.wrapper.HomeRepositoryOrmLite;
-import com.eternalcode.core.database.wrapper.IgnoreRepositoryOrmLite;
+import com.eternalcode.core.feature.ignore.IgnoreFacade;
+import com.eternalcode.core.feature.FeatureFacade;
 import com.eternalcode.core.feature.adminchat.AdminChatCommand;
 import com.eternalcode.core.feature.afk.AfkCommand;
 import com.eternalcode.core.feature.afk.AfkController;
@@ -85,12 +86,7 @@ import com.eternalcode.core.feature.home.HomeRepository;
 import com.eternalcode.core.feature.home.command.DelHomeCommand;
 import com.eternalcode.core.feature.home.command.HomeCommand;
 import com.eternalcode.core.feature.home.command.SetHomeCommand;
-import com.eternalcode.core.feature.ignore.IgnoreCommand;
-import com.eternalcode.core.feature.ignore.IgnoreRepository;
-import com.eternalcode.core.feature.ignore.UnIgnoreCommand;
-import com.eternalcode.core.feature.poll.PollCommand;
-import com.eternalcode.core.feature.poll.PollCreateController;
-import com.eternalcode.core.feature.poll.PollManager;
+import com.eternalcode.core.feature.poll.PollFacade;
 import com.eternalcode.core.feature.privatechat.PrivateChatCommands;
 import com.eternalcode.core.feature.privatechat.PrivateChatService;
 import com.eternalcode.core.feature.reportchat.HelpOpCommand;
@@ -162,13 +158,14 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import panda.std.stream.PandaStream;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 class EternalCore implements EternalCoreApi {
 
@@ -195,7 +192,6 @@ class EternalCore implements EternalCoreApi {
     private final TranslationManager translationManager;
     private final AfkService afkService;
     private final TeleportRequestService teleportRequestService;
-    private final PollManager pollManager;
 
     /* Database */
     private DatabaseManager databaseManager;
@@ -261,33 +257,37 @@ class EternalCore implements EternalCoreApi {
         this.noticeService = new NoticeService(this.scheduler, this.translationManager, this.viewerProvider, this.notificationAnnouncer, this.placeholderRegistry);
         this.afkService = new AfkService(pluginConfiguration.afk, this.noticeService, this.userManager);
         this.teleportRequestService = new TeleportRequestService(pluginConfiguration.tpa);
-        this.pollManager = new PollManager(this.noticeService, this.getScheduler());
 
         /* Database */
         WarpRepository warpRepository = new WarpConfigRepository(this.configurationManager, locationsConfiguration);
         HomeRepository homeRepository;
-        IgnoreRepository ignoreRepository;
 
         try {
             this.databaseManager = new DatabaseManager(pluginConfiguration, plugin.getLogger(), plugin.getDataFolder());
             this.databaseManager.connect();
 
             homeRepository = HomeRepositoryOrmLite.create(this.databaseManager, this.scheduler);
-            ignoreRepository = IgnoreRepositoryOrmLite.create(this.databaseManager, this.scheduler);
 
         }
         catch (Exception exception) {
             exception.printStackTrace();
             plugin.getLogger().severe("Can not connect to database! Some functions may not work!");
 
-            NoneRepository noneRepository = new NoneRepository();
-
-            homeRepository = noneRepository;
-            ignoreRepository = noneRepository;
+            homeRepository = new NoneRepository();
         }
 
+        /* Features */
+
+        IgnoreFacade ignoreFacade = new IgnoreFacade(this.noticeService, this.databaseManager, this.scheduler);
+        PollFacade pollFacade = new PollFacade(this.userManager, this.noticeService, this.scheduler);
+
+        List<FeatureFacade> featureFacades = List.of(
+            pollFacade,
+            ignoreFacade
+        );
+
         /* depends on Database */
-        this.privateChatService = new PrivateChatService(this.noticeService, ignoreRepository, this.userManager);
+        this.privateChatService = new PrivateChatService(this.noticeService, ignoreFacade, this.userManager);
         this.warpManager = WarpManager.create(warpRepository);
         this.homeManager = HomeManager.create(homeRepository);
 
@@ -401,7 +401,6 @@ class EternalCore implements EternalCoreApi {
                 new InventoryClearCommand(this.noticeService),
                 new InventoryOpenCommand(server, this.noticeService),
                 new ButcherCommand(this.noticeService, pluginConfiguration),
-                new PollCommand(this.noticeService, this.pollManager),
 
                 // Info Commands
                 new OnlinePlayerCountCommand(this.noticeService, server),
@@ -414,17 +413,20 @@ class EternalCore implements EternalCoreApi {
                 new AfkCommand(this.noticeService, pluginConfiguration, this.afkService),
                 new SkullCommand(this.noticeService, this.skullAPI),
                 new LanguageCommand(languageInventory),
-                new IgnoreCommand(ignoreRepository, this.noticeService),
-                new UnIgnoreCommand(ignoreRepository, this.noticeService),
 
                 ChatManagerCommand.create(this.chatManager, this.noticeService, pluginConfiguration.chat.linesToClear)
             )
+            .beforeRegister((builder, platform, executeResultHandler, injector) -> {
+                for (FeatureFacade facade : featureFacades) {
+                    facade.configureCommands(builder);
+                }
+            })
             .commandGlobalEditor(new CommandConfigurator(commandConfiguration))
             .register();
 
         /* Listeners */
 
-        Stream.of(
+        PandaStream.of(
             new TeleportDeathController(this.teleportService),
             new PlayerChatSoundListener(pluginConfiguration, server),
             new PlayerJoinListener(pluginConfiguration, this.noticeService, server),
@@ -436,9 +438,11 @@ class EternalCore implements EternalCoreApi {
             new PlayerDeathListener(this.noticeService),
             new TeleportListeners(this.noticeService, this.teleportTaskService),
             new AfkController(this.afkService),
-            new PlayerLoginListener(this.translationManager, this.userManager, this.miniMessage),
-            new PollCreateController(this.noticeService, this.pollManager, this.userManager)
-        ).forEach(listener -> server.getPluginManager().registerEvents(listener, plugin));
+            new PlayerLoginListener(this.translationManager, this.userManager, this.miniMessage)
+        )
+            // Feature listeners
+            .concat(featureFacades.stream().flatMap(featureFacade -> featureFacade.listeners().stream()))
+            .forEach(listener -> server.getPluginManager().registerEvents(listener, plugin));
 
         /* Tasks */
 

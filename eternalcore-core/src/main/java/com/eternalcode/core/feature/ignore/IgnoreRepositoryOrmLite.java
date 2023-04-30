@@ -1,7 +1,8 @@
-package com.eternalcode.core.database.wrapper;
+package com.eternalcode.core.feature.ignore;
 
 import com.eternalcode.core.database.DatabaseManager;
-import com.eternalcode.core.feature.ignore.IgnoreRepository;
+import com.eternalcode.core.database.NoneRepository;
+import com.eternalcode.core.database.wrapper.AbstractRepositoryOrmLite;
 import com.eternalcode.core.scheduler.Scheduler;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,9 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-public class IgnoreRepositoryOrmLite extends AbstractRepositoryOrmLite implements IgnoreRepository {
-
-    private static final UUID IGNORE_ALL = UUID.nameUUIDFromBytes("*".getBytes());
+class IgnoreRepositoryOrmLite extends AbstractRepositoryOrmLite implements IgnoreRepository {
 
     private final Dao<IgnoreWrapper, Long> cachedDao;
     private final LoadingCache<UUID, Set<UUID>> ignores;
@@ -129,12 +128,13 @@ public class IgnoreRepositoryOrmLite extends AbstractRepositoryOrmLite implement
 
     }
 
-    public static IgnoreRepositoryOrmLite create(DatabaseManager databaseManager, Scheduler scheduler) {
+    public static IgnoreRepository create(DatabaseManager databaseManager, Scheduler scheduler) {
         try {
             TableUtils.createTableIfNotExists(databaseManager.connectionSource(), IgnoreWrapper.class);
         }
         catch (SQLException sqlException) {
-            throw new RuntimeException(sqlException);
+            sqlException.printStackTrace();
+            return new IgnoreRepositoryInMemory();
         }
 
         return new IgnoreRepositoryOrmLite(databaseManager, scheduler);

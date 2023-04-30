@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class PollManager {
+class PollManager {
 
     private final NoticeService noticeService;
     private final Scheduler scheduler;
